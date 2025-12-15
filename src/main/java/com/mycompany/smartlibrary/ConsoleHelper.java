@@ -35,11 +35,24 @@ public class ConsoleHelper {
         System.out.println("9. Exit");
     }
 
+    public void printError(String message) {
+        System.out.println("\n[!] ERROR: " + message);
+    }
+
+    public void printSuccess(String message) {
+        System.out.println("\n[V] SUKSES: " + message);
+    }
+
     public void printBulk(char c, int n) {
         for (int i = 0; i < n; i++) {
             System.out.print(c);
         }
         System.out.println();
+    }
+
+    public void pressEnterToContinue() {
+        System.out.print("\nPress Enter to Continue...");
+        scanner.nextLine();
     }
 
     public int askForInt(String prompt, int min, int max) {
@@ -52,11 +65,11 @@ public class ConsoleHelper {
                 if (value >= min && value <= max) {
                     return value;
                 } else {
-                    System.out.println("Error: Input harus antara " + min + " dan " + max + "!");
+                    System.out.println("Error: Input must be between " + min + " and " + max + "!");
                 }
 
             } catch (NumberFormatException e) {
-                System.out.println("Error: Input harus berupa angka (Integer)!");
+                System.out.println("Error: Input must be an Integer!");
             }
         }
     }
@@ -67,9 +80,9 @@ public class ConsoleHelper {
             String input = scanner.nextLine();
 
             if (input.trim().length() < minLength) {
-                System.out.println("Error: Input terlalu pendek! (Min " + minLength + " karakter)");
+                System.out.println("Error: Input too short! (Min " + minLength + " character)");
             } else if (input.length() > maxLength) {
-                System.out.println("Error: Input terlalu panjang! (Max " + maxLength + " karakter)");
+                System.out.println("Error: Input too long! (Max " + maxLength + " character)");
             } else {
                 return input; // Input valid
             }
@@ -84,7 +97,7 @@ public class ConsoleHelper {
             System.out.println((i + 1) + ". " + constants[i].name());
         }
 
-        int choice = askForInt("Pilih opsi (angka): ", 1, constants.length);
+        int choice = askForInt("Choose option (Integer): ", 1, constants.length);
         return constants[choice - 1];
     }
 }

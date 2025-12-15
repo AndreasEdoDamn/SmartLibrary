@@ -1,11 +1,8 @@
 package com.mycompany.smartlibrary;
 
 public class Journal extends LibraryResource implements Loanable {
-    private boolean isBorrowed;
-
-    public Journal(String resourceID, String title, String location) {
-        super(resourceID, title, location);
-        this.isBorrowed = false;
+    public Journal(String resourceID, String title, String location, int stock) {
+        super(resourceID, title, location, stock);
     }
 
     @Override
@@ -15,8 +12,8 @@ public class Journal extends LibraryResource implements Loanable {
 
     @Override
     public void borrowItem() {
-        if (!isBorrowed) {
-            isBorrowed = true;
+        if (!isBorrowed()) {
+            setIsBorrowed(true);
             System.out.println("Buku " + getTitle() + " berhasil dipinjam.");
         } else {
             System.out.println("Buku sedang tidak tersedia.");
@@ -25,7 +22,7 @@ public class Journal extends LibraryResource implements Loanable {
 
     @Override
     public void returnItem() {
-        isBorrowed = false;
+        setIsBorrowed(false);
         System.out.println("Buku " + getTitle() + " dikembalikan.");
     }
 }
