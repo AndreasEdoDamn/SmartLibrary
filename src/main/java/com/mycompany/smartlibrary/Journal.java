@@ -12,7 +12,7 @@ public class Journal extends LibraryResource implements Loanable {
 
     @Override
     public void borrowItem() {
-        if (!isBorrowed()) {
+        if (getStock() > 0) {
             setIsBorrowed(true);
             System.out.println("Buku " + getTitle() + " berhasil dipinjam.");
         } else {

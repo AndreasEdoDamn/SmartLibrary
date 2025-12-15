@@ -100,4 +100,10 @@ public class ConsoleHelper {
         int choice = askForInt("Choose option (Integer): ", 1, constants.length);
         return constants[choice - 1];
     }
+    public void printBorrowMenu(){
+        System.out.println("What do you want to borrow:");
+        System.out.println("1. Book");
+        System.out.println("2. Journal");
+        System.out.println("3. Multimedi(DVD/CD)");
+    }
 }
