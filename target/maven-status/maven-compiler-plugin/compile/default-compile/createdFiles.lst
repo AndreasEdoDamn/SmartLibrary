@@ -1,0 +1,11 @@
+com\mycompany\smartlibrary\ConsoleHelper.class
+com\mycompany\smartlibrary\Loanable.class
+com\mycompany\smartlibrary\Book.class
+com\mycompany\smartlibrary\Journal.class
+com\mycompany\smartlibrary\Member.class
+com\mycompany\smartlibrary\ResourceType.class
+com\mycompany\smartlibrary\LibraryResource.class
+com\mycompany\smartlibrary\Multimedia.class
+com\mycompany\smartlibrary\SmartLibrary.class
+com\mycompany\smartlibrary\Shelf.class
+com\mycompany\smartlibrary\Main.class
