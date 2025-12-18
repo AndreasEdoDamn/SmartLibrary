@@ -1,16 +1,19 @@
 package com.mycompany.smartlibrary;
-
 import java.util.Scanner;
 
 public class ConsoleHelper {
 
-    Scanner scanner;
+    //===========================================================================================================================//
+
+    private final Scanner scanner;
 
     public ConsoleHelper() {
         scanner = new Scanner(System.in);
     }
 
-    public void printLogo() {
+    //===========================================================================================================================//
+
+    public static void printLogo() {
         System.out.println("""
              _____                       _   _      _ _                         \s
             /  ___|                     | | | |    (_) |                         \s
@@ -23,7 +26,7 @@ public class ConsoleHelper {
            \s""");
     }
 
-    public void printOptions() {
+    public static void printOptions() {
         System.out.println("1. Show all LibraryResource");
         System.out.println("2. Add new LibraryResource");
         System.out.println("3. Update LibraryResource Stock");
@@ -35,19 +38,44 @@ public class ConsoleHelper {
         System.out.println("9. Exit");
     }
 
-    public void printError(String message) {
+    //===========================================================================================================================//
+
+    public static void printNotification(String message) {
+        int totalWidth = 72;
+
+        int paddingLeft = (totalWidth - message.length()) / 2;
+        int paddingRight = totalWidth - message.length() - paddingLeft;
+
+        String leftSpace = " ".repeat(paddingLeft);
+        String rightSpace = " ".repeat(paddingRight);
+
+        String line = "─".repeat(totalWidth);
+
+        System.out.println("┌" + line + "┐");
+        System.out.println("│" + leftSpace + message + rightSpace + "│");
+        System.out.println("└" + line + "┘");
+    }
+
+    public static void printOneLineNotification(String message) {
+        int totalWidth = 72;
+
+        int paddingLeft = (totalWidth - message.length()) / 2;
+        int paddingRight = totalWidth - message.length() - paddingLeft;
+
+        String leftSpace = "─".repeat(paddingLeft - 1);
+        String rightSpace = "─".repeat(paddingRight - 1);
+
+        System.out.println("─" + leftSpace + " " + message + " " + rightSpace + "─");
+    }
+
+    //===========================================================================================================================//
+
+    public static void printError(String message) {
         System.out.println("\n[!] ERROR: " + message);
     }
 
-    public void printSuccess(String message) {
+    public static void printSuccess(String message) {
         System.out.println("\n[V] SUKSES: " + message);
-    }
-
-    public void printBulk(char c, int n) {
-        for (int i = 0; i < n; i++) {
-            System.out.print(c);
-        }
-        System.out.println();
     }
 
     public void pressEnterToContinue() {
@@ -55,9 +83,15 @@ public class ConsoleHelper {
         scanner.nextLine();
     }
 
+    public static void clearScreen() {
+        System.out.print("\n".repeat(50));
+    }
+
+    //===========================================================================================================================//
+
     public int askForInt(String prompt, int min, int max) {
         while (true) {
-            System.out.print(prompt);
+            System.out.printf("%s (%d - %d): ", prompt, min, max);
             String input = scanner.nextLine();
 
             try {
@@ -74,9 +108,28 @@ public class ConsoleHelper {
         }
     }
 
+    public int askForIntBiggerThan(String prompt, int min) {
+        while (true) {
+            System.out.printf("%s (>= %d): ", prompt, min);
+            String input = scanner.nextLine();
+
+            try {
+                int value = Integer.parseInt(input);
+                if (value >= min) {
+                    return value;
+                } else {
+                    System.out.println("Error: Input must be bigger than " + min + "!");
+                }
+
+            } catch (NumberFormatException e) {
+                System.out.println("Error: Input must be an Integer!");
+            }
+        }
+    }
+
     public String askForString(String prompt, int minLength, int maxLength) {
         while (true) {
-            System.out.print(prompt);
+            System.out.printf("%s (%d - %d): ", prompt, minLength, maxLength);
             String input = scanner.nextLine();
 
             if (input.trim().length() < minLength) {
@@ -97,13 +150,10 @@ public class ConsoleHelper {
             System.out.println((i + 1) + ". " + constants[i].name());
         }
 
-        int choice = askForInt("Choose option (Integer): ", 1, constants.length);
+        int choice = askForInt("Choose option", 1, constants.length);
         return constants[choice - 1];
     }
-    public void printBorrowMenu(){
-        System.out.println("What do you want to borrow:");
-        System.out.println("1. Book");
-        System.out.println("2. Journal");
-        System.out.println("3. Multimedi(DVD/CD)");
-    }
+
+    //===========================================================================================================================//
+
 }

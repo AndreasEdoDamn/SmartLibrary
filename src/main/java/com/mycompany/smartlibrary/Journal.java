@@ -14,15 +14,15 @@ public class Journal extends LibraryResource implements Loanable {
     public void borrowItem() {
         if (getStock() > 0) {
             setIsBorrowed(true);
-            System.out.println("Buku " + getTitle() + " berhasil dipinjam.");
+            System.out.println("Item \"" + getTitle() + "\" successfully borrowed.");
         } else {
-            System.out.println("Buku sedang tidak tersedia.");
+            System.out.println("Item does not exist.");
         }
     }
 
     @Override
     public void returnItem() {
         setIsBorrowed(false);
-        System.out.println("Buku " + getTitle() + " dikembalikan.");
+        System.out.println("Item \"" + getTitle() + "\" has been returned.");
     }
 }

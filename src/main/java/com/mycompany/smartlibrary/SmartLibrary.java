@@ -1,36 +1,51 @@
 package com.mycompany.smartlibrary;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SmartLibrary {
 
-    private final ConsoleHelper consoleHelper;
-    private final Shelf<Book> bookShelf;
-    private final Shelf<Journal> journalShelf;
-    private final Shelf<Multimedia> multimediaShelf;
-    private ArrayList<LibraryResource> allResources;
+    //===========================================================================================================================//
 
-    private ArrayList<Member> Members;
-    
+    private final MemberService memberService;
+    private final ConsoleHelper consoleHelper;
+    private final Map<String, Shelf<LibraryResource>> shelves;
+    private final ArrayList<LibraryResource> resources;
+
+    //===========================================================================================================================//
+
     public SmartLibrary() {
-        consoleHelper = new ConsoleHelper();
-        bookShelf = new Shelf<>();
-        journalShelf = new Shelf<>();
-        multimediaShelf = new Shelf<>();
-        allResources = new ArrayList<>();
-        
-        this.Members = new ArrayList<>();
-//        allMembers.add(new Member("M001", "Ani"));
-//        allMembers.add(new Member("M002", "Bima"));
+        this.memberService = new MemberService();
+        this.consoleHelper = new ConsoleHelper();
+        this.resources = new ArrayList<>();
+        this.shelves = new HashMap<>();
+
+        this.shelves.put("Book", new Shelf<LibraryResource>());
+        this.shelves.put("Journal", new Shelf<LibraryResource>());
+        this.shelves.put("Multimedia", new Shelf<LibraryResource>());
+
+        initializeData();
     }
+
+    private void initializeData() {
+        memberService.getMembers().add(new Member("Dicco", "M001"));
+        Book book = new Book("R001", "Example Book", "Example Location", 100);
+        resources.add(book);
+        shelves.get("Book").addItem(book);
+    }
+
+    //===========================================================================================================================//
 
     public void mainMenu() {
         boolean isRunning = true;
 
         while (isRunning) {
-            consoleHelper.printLogo();
-            consoleHelper.printOptions();
+            ConsoleHelper.clearScreen();
+            ConsoleHelper.printLogo();
+            ConsoleHelper.printOptions();
 
-            int option = consoleHelper.askForInt("Choose option [1..9]: ", 1, 9);
+            int option = consoleHelper.askForInt("Choose option ", 1, 9);
             if (option == 9) {
                 isRunning = false;
             } else {
@@ -40,383 +55,208 @@ public class SmartLibrary {
     }
 
     public void handleOption(int option) {
+        ConsoleHelper.clearScreen();
         switch (option) {
             case 1:
-                showAllLibraryResource(allResources);
-                consoleHelper.pressEnterToContinue();
+                showAllLibraryResource();
                 break;
             case 2:
                 addNewLibraryResource();
-                consoleHelper.pressEnterToContinue();
                 break;
             case 3:
                 updateLibraryResourceStock();
-                consoleHelper.pressEnterToContinue();
                 break;
             case 4:
-                borrowResource(allResources);
-                consoleHelper.pressEnterToContinue();
+                borrowResource();
                 break;
-                
+            case 5:
+                returnResource();
+                break;
             case 6:
-                addMember();
-                consoleHelper.pressEnterToContinue();
+                memberService.addMember(consoleHelper);
                 break;
             case 7:
-                removeMember();
-                consoleHelper.pressEnterToContinue();
+                memberService.removeMember(consoleHelper);
                 break;
             case 8:
-                showAllMembers();
-                consoleHelper.pressEnterToContinue();
+                memberService.showAllMembers();
                 break;
         }
+
+        consoleHelper.pressEnterToContinue();
     }
+
+    //===========================================================================================================================//
 
     public void addNewLibraryResource() {
-        String resourceID;
-        while (true) {
-            resourceID = consoleHelper.askForString("Input Resource ID: ", 1, 5);
-            if (isIdExist(resourceID)) {
-                System.out.println("Error: ID has already been used! Please use another ID.");
-            } else {
-                break;
-            }
-        }
+        ConsoleHelper.printOneLineNotification("Adding New Library Resource");
+        String title = consoleHelper.askForString("\nInput title", 10, 100);
+        String location = consoleHelper.askForString("Input location", 10, 100);
+        int stock = consoleHelper.askForIntBiggerThan("Input stock", 0);
+        ResourceType resourceType = consoleHelper.askForEnum("\nInput Resource Type", ResourceType.class);
 
-        String title = consoleHelper.askForString("Input title: ",10,50);
-        String location = consoleHelper.askForString("Input location: ",10,50);
-        int stock = consoleHelper.askForInt("Input stock: ",0,999999999);
-        ResourceType resourceType = consoleHelper.askForEnum("Input Resource Type: ", ResourceType.class);
-
+        String resourceID = IDService.generateLibraryResourceID(resources);
         LibraryResource newItem = null;
 
-        if (resourceType == ResourceType.BOOK) {
-            Book book = new Book(resourceID, title, location, stock);
-            bookShelf.addItem(book);
-            newItem = book;
-        } else if (resourceType == ResourceType.JOURNAL) {
-            Journal journal = new Journal(resourceID, title, location, stock);
-            journalShelf.addItem(journal);
-            newItem = journal;
-        } else {
-            Multimedia multimedia = new Multimedia(resourceID, title, location, stock);
-            multimediaShelf.addItem(multimedia);
-            newItem = multimedia;
+        if (resourceType == ResourceType.Book) {
+            newItem = new Book(resourceID, title, location, stock);
+        } else if (resourceType == ResourceType.Journal) {
+            newItem = new Journal(resourceID, title, location, stock);
+        } else if (resourceType == ResourceType.Multimedia) {
+            newItem = new Multimedia(resourceID, title, location, stock);
         }
 
-        allResources.add(newItem);
-        System.out.println("Success! Item has been added to " + resourceType);
+        shelves.get(resourceType.name()).addItem(newItem);
+        resources.add(newItem);
+        ConsoleHelper.printSuccess("Item has been added to " + resourceType.name());
     }
 
-    public void showAllLibraryResource(ArrayList<LibraryResource> items) {
-        if (items.isEmpty()) {
-            System.out.println("┌────────────────────────────────────────────────────────────────────────┐");
-            System.out.println("│                       PERPUSTAKAAN SEDANG KOSONG                       │");
-            System.out.println("└────────────────────────────────────────────────────────────────────────┘");
-            
+    public void showAllLibraryResource() {
+        ConsoleHelper.printOneLineNotification("Showing All Library Resources");
+        if (resources.isEmpty()) {
+            ConsoleHelper.printNotification("LIBRARY IS EMPTY");
             return;
         }
 
         String format = "│ %-8s │ %-12s │ %-30s │ %-15s │ %-6s │%n";
 
-        String lineTop    = "┌──────────┬──────────────┬────────────────────────────────┬─────────────────┬────────┐";
-        String lineMiddle = "├──────────┼──────────────┼────────────────────────────────┼─────────────────┼────────┤";
-        String lineBottom = "└──────────┴──────────────┴────────────────────────────────┴─────────────────┴────────┘";
+        TableHelper.printTableHeader(format,
+                "ID", "Type", "Title", "Location", "Stok"
+        );
 
-        System.out.println(lineTop);
-        System.out.printf(format, "ID", "Type", "Title", "Location", "Stok");
-        System.out.println(lineMiddle);
-
-        for (LibraryResource item : items) {
-            String type = item.getClass().getSimpleName();
-
-            String displayTitle = item.getTitle();
-            if (displayTitle.length() > 28) {
-                displayTitle = displayTitle.substring(0, 25) + "...";
-            }
-
-            int stock = 0;
-            if (item instanceof Book) {
-                stock = ((Book) item).getStock();
-            } else if (item instanceof Journal) {
-                stock = ((Journal) item).getStock();
-            } else if (item instanceof Multimedia) {
-                stock = ((Multimedia) item).getStock();
-            }
-
-            System.out.printf(format,
+        for (LibraryResource item : resources) {
+            TableHelper.printTableRow(format,
                     item.getResourceID(),
-                    type,
-                    displayTitle,
-                    item.getLocation(),
-                    stock
+                    item.getClass().getSimpleName(),
+                    item.getDisplayTitle(),
+                    item.getDisplayLocation(),
+                    item.getStock()
             );
         }
 
-        System.out.println(lineBottom);
-        
+        TableHelper.printBorder(format, BorderType.BOTTOM);
     }
 
     public void updateLibraryResourceStock() {
-        String id = consoleHelper.askForString("Input Resource ID: ", 1, 5);
+        ConsoleHelper.printOneLineNotification("Updating Library Resource Stock");
+        showAllLibraryResource();
+        if (resources.isEmpty()) return;
 
-        LibraryResource item = findResourceById(id);
+
+        String libraryResourceID = consoleHelper.askForString("Input Resource ID", 1, 5);
+        LibraryResource item = IDService.findLibraryResourceById(resources, libraryResourceID);
         if (item == null) {
-            consoleHelper.printError("Item with ID " + id + " not found!");
-            consoleHelper.pressEnterToContinue();
+            ConsoleHelper.printError("Item with ID " + libraryResourceID + " not found!");
             return;
         }
 
-        System.out.println("Item found: " + item.getTitle());
-        System.out.println("Current stock: " + item.getStock());
-
-        int newStock = consoleHelper.askForInt("Input new stock: ", 0, 1000);
-
+        int newStock = consoleHelper.askForIntBiggerThan("Input new stock", 0);
         item.setStock(newStock);
-        consoleHelper.printSuccess("Stok successfully updated: " + newStock);
-    }
-    
-    public void addMember() {
-        String memberID;
-        while (true) {
-            memberID = consoleHelper.askForString("Input Member ID: ", 1, 5);
-            if (isMemberIdExist(memberID)) {
-                System.out.println("Error: ID has already been used! Please use another ID.");
-            } else {
-                break;
-            }
-        }
-
-        String name = consoleHelper.askForString("Input name: ",1,50);
-        Members.add(new Member(name, memberID));
-        consoleHelper.printSuccess("Member have been successfully added!");
+        ConsoleHelper.printSuccess("Stok successfully updated: " + newStock);
     }
 
-    public void removeMember() {
-        String memberID = consoleHelper.askForString("Input Member ID: ",1,50);
-        Member member = findMemberById(memberID);
-        if (member == null) {
-            consoleHelper.printError("Member with ID " + memberID + " not found!");
+    //===========================================================================================================================//
+
+    public void showMemberBorrowedBooks(Member member) {
+        LoanDetail[] borrowedItems = member.getBorrowedItems();
+        ConsoleHelper.printOneLineNotification("Items Borrowed by:");
+
+        if (member.getBorrowCount() == 0) {
+            ConsoleHelper.printNotification("MEMBER HAS NOT BORROWED ANY ITEM");
             return;
         }
 
-        Members.remove(member);
-        consoleHelper.printSuccess("Member have been successfully removed!");
-    }
+        String format = "│ %-8s │ %-12s │ %-30s │%n";
+        TableHelper.printTableHeader(format,
+                "ID", "Type", "Title"
+        );
 
-    public void showAllMembers() {
-        if (Members.isEmpty()) {
-            System.out.println("┌──────────────────────────────────────────────────────┐");
-            System.out.println("│                  NO MEMBERS REGISTERED               │");
-            System.out.println("└──────────────────────────────────────────────────────┘");
-            return;
-        }
-
-        String format = "│ %-8s │ %-30s │ %-5s │%n";
-
-        String lineTop    = "┌──────────┬────────────────────────────────┬───────┐";
-        String lineMiddle = "├──────────┼────────────────────────────────┼───────┤";
-        String lineBottom = "└──────────┴────────────────────────────────┴───────┘";
-
-        System.out.println(lineTop);
-        System.out.printf(format, "ID", "Name", "Loans");
-        System.out.println(lineMiddle);
-
-        for (Member member : Members) {
-            String displayName = member.getName();
-            if (displayName.length() > 28) {
-                displayName = displayName.substring(0, 25) + "...";
-            }
-
-            int loanCount =  member.getBorrowCount();//member.getBorrowedCount();
-
-            System.out.printf(format,
-                    member.getMemberID(),
-                    displayName,
-                    loanCount
+        for (LoanDetail item : borrowedItems) {
+            if (item == null) continue;
+            TableHelper.printTableRow(format,
+                    item.getResource().getResourceID(),
+                    item.getClass().getSimpleName(),
+                    item.getResource().getDisplayTitle()
             );
         }
 
-        System.out.println(lineBottom);
+        TableHelper.printBorder(format, BorderType.BOTTOM);
     }
-    
-    public void showMemberBorrowedBooks() {
-        String memberID = consoleHelper.askForString("Input Member ID: ", 1, 5);
-        Member member = findMemberById(memberID);
-        
+
+    private void borrowResource() {
+        showAllLibraryResource();
+        if (resources.isEmpty()) return;
+
+        String libraryResourceID = consoleHelper.askForString("Input Resource ID ", 1, 5);
+        LibraryResource item = IDService.findLibraryResourceById(resources, libraryResourceID);
+        if (item == null) {
+            ConsoleHelper.printError("Item with ID " + libraryResourceID + " not found!");
+            return;
+        }
+
+        System.out.println();
+        memberService.showAllMembers();
+        if (memberService.getMembers().isEmpty()) return;
+        String memberID = consoleHelper.askForString("Input Member ID: ", 1, 50);
+        Member member = IDService.findMemberById(memberService.getMembers(), memberID);
         if (member == null) {
-            consoleHelper.printError("Member with ID " + memberID + " not found!");
-            consoleHelper.pressEnterToContinue();
+            ConsoleHelper.printError("Member with ID " + memberID + " not found!");
             return;
         }
 
-        LibraryResource[] borrowedItems = member.getBorrowedItems();
-        
-        System.out.println("\n--- Item Dipinjam oleh: " + member.getName() + " ---");
-        
-        // Hitung jumlah item yang dipinjam
-        int count = 0;
-        for (LibraryResource item : borrowedItems) {
-            if (item != null) {
-                count++;
-            }
-        }
-        
-        if (count == 0) {
-            System.out.println("┌───────────────────────────────────────────────────┐");
-            System.out.println("│              Anggota tidak meminjam item          │");
-            System.out.println("└───────────────────────────────────────────────────┘");
-            consoleHelper.pressEnterToContinue();
+        if (!member.canBorrow()) {
+            ConsoleHelper.printError("Your borrow quota is full please return a book first");
             return;
         }
-        
-        // Tampilkan tabel item yang dipinjam
-        String format = "│ %-8s │ %-12s │ %-30s │%n";
 
-        String lineTop    = "┌──────────┬──────────────┬────────────────────────────────┐";
-        String lineMiddle = "├──────────┼──────────────┼────────────────────────────────┤";
-        String lineBottom = "└──────────┴──────────────┴────────────────────────────────┘";
-
-        System.out.println(lineTop);
-        System.out.printf(format, "ID", "Type", "Title");
-        System.out.println(lineMiddle);
-        
-        for (LibraryResource item : borrowedItems) {
-            if (item != null) {
-                 String type = item.getClass().getSimpleName();
-                 String displayTitle = item.getTitle();
-                 if (displayTitle.length() > 28) {
-                     displayTitle = displayTitle.substring(0, 25) + "...";
-                 }
-                System.out.printf(format,
-                    item.getResourceID(),
-                    type,
-                    displayTitle
-                );
-            }
-        }
-        System.out.println(lineBottom);
-        
-        consoleHelper.pressEnterToContinue();
+        Loanable loanableItem = (Loanable) item;
+        loanableItem.borrowItem();
+        item.setStock(item.getStock() - 1);
+        member.borrowItem(item);
     }
 
-    private LibraryResource findResourceById(String id) {
-        for (LibraryResource item : allResources) {
-            if (item.getResourceID().equalsIgnoreCase(id)) {
-                return item;
-            }
-        }
-        return null;
-    }
-    private Member findMemberById(String id) {
-        for (Member member : Members) {
-            if (member.getMemberID().equalsIgnoreCase(id)) {
-                return member;
-            }
-        }
-        return null;
-    }
-
-    private boolean isIdExist(String id) {
-        for (LibraryResource item : allResources) {
-            if (item.getResourceID().equalsIgnoreCase(id)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    private boolean isMemberIdExist(String id) {
-        for (Member member : Members) {
-            if (member.getMemberID().equalsIgnoreCase(id)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    private void borrowResource(ArrayList<LibraryResource> items){
-        showAllLibraryResource(allResources);
-        if(!items.isEmpty()){
-            String id = consoleHelper.askForString("Input Resource ID: ", 1, 5);
-
-            LibraryResource item = findResourceById(id);
-            if (item == null) {
-                consoleHelper.printError("Item with ID " + id + " not found!");
-                return;
-            }
-            
-            String memberID = consoleHelper.askForString("Input Member ID: ",1,50);
-            Member member = findMemberById(memberID);
-            if (member == null) {
-                consoleHelper.printError("Member with ID " + memberID + " not found!");
-                return;
-            }
-            
-            if(!member.canBorrow()){
-                consoleHelper.printError("Your borrow quota is full please return a book first");
-                return;
-            }
-            
-            Loanable loanableItem = (Loanable) item;
-            loanableItem.borrowItem();
-            item.setStock(item.getStock() - 1);
-            member.borrowItem(item);
-            
-
-            
-            
-        }
-    }
-    
     private void returnResource() {
+        ConsoleHelper.printOneLineNotification("Returning Library Resource");
+        memberService.showAllMembers();
+        if (memberService.getMembers().isEmpty()) return;
+
         String memberID = consoleHelper.askForString("Input Member ID: ", 1, 5);
-        Member member = findMemberById(memberID);
-        
+        Member member = IDService.findMemberById(memberService.getMembers(), memberID);
+
         if (member == null) {
-            consoleHelper.printError("Member with ID " + memberID + " not found!");
+            ConsoleHelper.printError("Member with ID " + memberID + " not found!");
             consoleHelper.pressEnterToContinue();
             return;
         }
+
+        System.out.println();
+        showMemberBorrowedBooks(member);
+        if (member.getBorrowCount() == 0) return;
 
         String resourceID = consoleHelper.askForString("Input Resource ID to return: ", 1, 5);
-        
-        // 1. Hapus item dari daftar pinjaman member
-        // member.returnItem() akan mengembalikan objek LibraryResource jika ditemukan di pinjaman member
-        LibraryResource item = member.returnItem(resourceID);
-        
+        LoanDetail loanDetail = member.returnItem(resourceID);
+        LibraryResource item = loanDetail.getResource();
         if (item == null) {
-            consoleHelper.printError("Error: Resource ID " + resourceID + " not found in " + member.getName() + "'s borrowed list.");
-            consoleHelper.pressEnterToContinue();
+            ConsoleHelper.printError("Resource ID " + resourceID + " not found in " + member.getName() + "'s borrowed list.");
             return;
         }
-        
-        // 2. Lakukan logika pengembalian di sisi LibraryResource
-        
-        // Casting ke Loanable (karena semua subkelas mengimplementasikannya)
+
         Loanable loanableItem = (Loanable) item;
-        loanableItem.returnItem(); // Panggil returnItem() (menyetel isBorrowed=false)
-            
-        // 3. Tambah stok di perpustakaan
+        loanableItem.returnItem();
         item.setStock(item.getStock() + 1);
 
-        // 4. Hitung Denda
-        int daysLate = consoleHelper.askForInt("Input days late (0 if on time): ", 0, 365);
-        
-        // calculateFine() akan memanggil implementasi spesifik (Book/Journal/Multimedia)
-        double fine = item.calculateFine(daysLate); 
+        double fine = item.calculateFine((int) loanDetail.getDaysLate());
 
-        consoleHelper.printSuccess("Resource " + item.getTitle() + " has been successfully returned.");
-        System.out.println("Stok baru: " + item.getStock());
-        
+        ConsoleHelper.printSuccess("Resource " + item.getTitle() + " has been successfully returned.");
+        System.out.println("Stock: " + item.getStock());
+
         if (fine > 0) {
-            System.out.println("⚠️ Fine for " + daysLate + " days late: Rp " + (int)fine);
+            System.out.println("Fine for " + (int) loanDetail.getDaysLate() + " days late: Rp " + (int)fine);
         } else {
-            System.out.println("✅ On time return. No fine assessed.");
+            System.out.println("On time return. No fine assessed.");
         }
-        
-        consoleHelper.pressEnterToContinue();
     }
+
+    //===========================================================================================================================//
 
 }

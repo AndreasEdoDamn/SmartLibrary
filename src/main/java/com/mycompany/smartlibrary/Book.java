@@ -1,29 +1,35 @@
 package com.mycompany.smartlibrary;
 
-
 public class Book extends LibraryResource implements Loanable {
+
+    //===========================================================================================================================//
+
     public Book(String resourceID, String title, String location, int stock) {
         super(resourceID, title, location, stock);
     }
 
+    //===========================================================================================================================//
+
     @Override
     public double calculateFine(int daysLate) {
-        return daysLate * 2000;
+        return daysLate * Constants.FINE_AMOUNT.BOOK;
     }
 
     @Override
     public void borrowItem() {
         if (getStock() > 0) {
             setIsBorrowed(true);
-            System.out.println("Buku " + getTitle() + " berhasil dipinjam.");
+            System.out.println("Item \"" + getTitle() + "\" successfully borrowed.");
         } else {
-            System.out.println("Buku sedang tidak tersedia.");
+            System.out.println("Item is not available.");
         }
     }
 
     @Override
     public void returnItem() {
-        setIsBorrowed(false);
-        System.out.println("Buku " + getTitle() + " dikembalikan.");
+        System.out.println("Item \"" + getTitle() + "\" has been returned.");
     }
+
+    //===========================================================================================================================//
+
 }

@@ -1,71 +1,99 @@
 package com.mycompany.smartlibrary;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
-
 public class Member {
+
+    //===========================================================================================================================//
+
     private String memberID;
     private String name;
-    private LibraryResource[] borrowedItems;
-    private int borrowQuota = 3;
-    
+    private final LoanDetail[] borrowedItems;
+    private final int MAX_BORROW_LIMIT = 3;
+
+    //===========================================================================================================================//
+
     public Member(String name, String memberID){
         this.memberID = memberID;
         this.name = name;
-        this.borrowedItems = new LibraryResource[borrowQuota];
+        // Array dibuat dengan ukuran tetap (3)
+        this.borrowedItems = new LoanDetail[MAX_BORROW_LIMIT];
     }
-    
-    public String getMemberID(){
+
+    //===========================================================================================================================//
+
+    public String getDisplayName() {
+        if (name == null) return "";
+        String displayName = name;
+        if (name.length() > 28) {
+            displayName = name.substring(0, 25) + "...";
+        }
+        return displayName;
+    }
+
+    // Getter
+    public String getMemberID() {
         return memberID;
     }
-    public String getName(){
+
+    public String getName() {
         return name;
     }
-    public LibraryResource[] getBorrowedItems(){
+
+    public LoanDetail[] getBorrowedItems() {
         return borrowedItems;
     }
-    
+
+    public int getBorrowQuota() {
+        return MAX_BORROW_LIMIT - getBorrowCount();
+    }
+
+    // Setter
+    public void setMemberID(String memberID) {
+        this.memberID = memberID;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public boolean canBorrow(){
-        for(LibraryResource item: borrowedItems){
-            if(item == null){
-                return true;
-            }
-        }
-        return false;
+        return getBorrowCount() < MAX_BORROW_LIMIT;
     }
-    
-    public boolean borrowItem(LibraryResource item){
+
+    public void borrowItem(LibraryResource item){
         if(!canBorrow()){
-            return false;
+            System.out.println("Quota penuh, tidak bisa meminjam.");
+            return;
         }
-        for(int i=0;i<borrowedItems.length;i++){
-            if(borrowedItems[i] == null){
-                borrowedItems[i] = item;
-                this.borrowQuota--;
-                return true;
+
+        for (int i = 0; i < borrowedItems.length; i++) {
+            if (borrowedItems[i] == null) {
+                LoanDetail newLoan = new LoanDetail(item);
+                newLoan.setResource(item);
+
+                borrowedItems[i] = newLoan;
+                return;
             }
         }
-        return false;
     }
-    
-    public LibraryResource returnItem(String resourceID){
-        for(int i=0;i<borrowedItems.length;i++){
-            LibraryResource item = borrowedItems[i];
-            if(item != null && item.getResourceID().equalsIgnoreCase(resourceID)){
-                borrowedItems[i] = null;
-                this.borrowQuota++;
-                return item;
+
+    public LoanDetail returnItem(String resourceID){
+        for(int i = 0; i < borrowedItems.length; i++){
+            if(borrowedItems[i] != null) {
+                LoanDetail item = borrowedItems[i];
+
+                if(item != null && item.getResource().getResourceID().equalsIgnoreCase(resourceID)){
+                    borrowedItems[i] = null;
+                    return item;
+                }
             }
-            
         }
         return null;
     }
-    
+
     public int getBorrowCount(){
         int count = 0;
-        for(LibraryResource item: borrowedItems){
-            if(item!=null){
+        for(LoanDetail item: borrowedItems){
+            if(item != null){
                 count++;
             }
         }
